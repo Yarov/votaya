@@ -21,7 +21,7 @@ async function getCandidatosFromMongoDB(tipo: TipoCatalogo | null, entidadId?: s
     // Convertir a número si es posible
     const entidadIdNum = parseInt(entidadId, 10);
     query.idEstadoEleccion = entidadIdNum;
-    console.log(`Filtrando por entidad federativa ID: ${entidadIdNum}`);
+
   }
   
   // Si se especifica un tipo, construir un filtro adecuado
@@ -95,8 +95,7 @@ async function getCandidatosFromMongoDB(tipo: TipoCatalogo | null, entidadId?: s
     candidato.totalVotos = votosPorCandidato.get(candidatoId) || 0;
   });
   
-  console.log(`Paginación: página ${page}, límite ${limit}, total ${totalCandidatos}`);
-  console.log(`Candidatos obtenidos para esta página: ${candidatos.length}`);
+
   
   return {
     candidatos,
@@ -119,7 +118,7 @@ export async function GET(request: Request) {
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '12', 10);
     
-    console.log(`Buscando candidatos en MongoDB con tipo: ${tipo || 'todos'}${entidadId ? ` y entidad: ${entidadId}` : ''}, página: ${page}, límite: ${limit}`);
+
     
     // Obtener candidatos de MongoDB con la consulta optimizada y paginación
     const result = await getCandidatosFromMongoDB(tipo, entidadId || undefined, page, limit);
@@ -160,7 +159,7 @@ export async function GET(request: Request) {
       return plainDoc as CandidatoType;
     });
     
-    console.log(`Total de candidatos obtenidos para esta página: ${candidatos.length}`);
+
 
     // Creamos la respuesta con información de paginación
     const transformedData: CatalogoResponse = {

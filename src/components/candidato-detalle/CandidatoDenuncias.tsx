@@ -36,7 +36,7 @@ export default function CandidatoDenuncias({ candidato }: CandidatoDenunciasProp
 
   useEffect(() => {
     if (candidato && candidato._id) {
-      console.log('Candidato ID para buscar denuncias:', candidato._id);
+
       fetchDenuncias();
     }
   }, [candidato._id]); // Dependencia explícita en candidato._id para asegurar que se actualiza correctamente
@@ -56,7 +56,7 @@ export default function CandidatoDenuncias({ candidato }: CandidatoDenunciasProp
       // Crear la URL con el ID del candidato
       const candidatoId = candidato._id.toString();
       const url = `/api/denuncias/candidato/${candidatoId}`;
-      console.log('Fetching denuncias from:', url);
+
       
       // Hacer la petición con un timeout para evitar que se quede colgada
       const controller = new AbortController();
@@ -71,7 +71,7 @@ export default function CandidatoDenuncias({ candidato }: CandidatoDenunciasProp
       });
       
       clearTimeout(timeoutId);
-      console.log('Response status:', response.status);
+
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -80,7 +80,7 @@ export default function CandidatoDenuncias({ candidato }: CandidatoDenunciasProp
       }
       
       const data = await response.json();
-      console.log('Denuncias recibidas:', data);
+
       
       // Verificar que los datos son un array
       if (!Array.isArray(data)) {

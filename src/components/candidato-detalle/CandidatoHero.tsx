@@ -129,19 +129,13 @@ export default function CandidatoHero({
                 {(() => {
                   // Verificar si hay un ID de estado válido y es un número
                   if (candidato.idEstadoEleccion === undefined || typeof candidato.idEstadoEleccion !== 'number') {
-                    console.log('No hay ID de estado válido o no es número');
+
                     return null;
                   }
 
                   // No ajustar el ID ya que los IDs en la base de datos coinciden con los del archivo de entidades
                   const entidad = getEntidadById(candidato.idEstadoEleccion);
                   
-                  // Agregar log para depuración
-                  console.log('Datos de estado:', {
-                    idOriginal: candidato.idEstadoEleccion,
-                    entidad: entidad?.nombre || 'No encontrada'
-                  });
-
                   // Si no encontramos la entidad, mostrar un mensaje indicativo
                   if (!entidad) {
                     return (

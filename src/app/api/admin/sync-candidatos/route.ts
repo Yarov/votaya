@@ -23,7 +23,7 @@ async function connectToMongoDB() {
       return mongoose.connection;
     }
     
-    console.log('Intentando conectar a MongoDB Atlas...');
+
     
     // Configuración de conexión actualizada para MongoDB 4.x+
     const options: mongoose.ConnectOptions = {
@@ -35,7 +35,7 @@ async function connectToMongoDB() {
     
     // Intentar conectar usando la variable de entorno MONGODB_URI
     const conn = await mongoose.connect(MONGODB_URI, options);
-    console.log('Conexión a MongoDB Atlas establecida correctamente');
+
     return conn;
   } catch (error) {
     console.error('Error al conectar a MongoDB Atlas:', error);
@@ -125,7 +125,7 @@ function procesarCandidato(candidatoData: any): Partial<Candidato> {
         (red: any) => Number(red.idCandidato) === candidatoId
       );
       
-      console.log(`Candidato ID ${candidatoData.idCandidato}: Encontradas ${redesParaCandidato.length} redes sociales`);
+
       
       redesParaCandidato.forEach((red: any) => {
         if (red.descripcionRed) {
@@ -135,7 +135,7 @@ function procesarCandidato(candidatoData: any): Partial<Candidato> {
             nombreRed: tipoRedMap[red.idTipoRed] || `Red Social ${red.idTipoRed}`
           };
           redesSociales.push(redSocial);
-          console.log(`  - Agregada red social: ${redSocial.nombreRed} (${redSocial.descripcionRed})`);
+
         }
       });
     }
@@ -151,7 +151,7 @@ function procesarCandidato(candidatoData: any): Partial<Candidato> {
         (curso: any) => Number(curso.idCandidato) === candidatoId
       );
       
-      console.log(`Candidato ID ${candidatoData.idCandidato}: Encontrados ${cursosParaCandidato.length} cursos`);
+
       
       cursosParaCandidato.forEach((curso: any) => {
         const cursoCandidato = {
@@ -163,7 +163,7 @@ function procesarCandidato(candidatoData: any): Partial<Candidato> {
           descripcion: curso.descripcion || ''
         };
         cursosCandidatos.push(cursoCandidato);
-        console.log(`  - Agregado curso: ${cursoCandidato.nombreCurso}`);
+
       });
     }
     
@@ -214,7 +214,7 @@ function procesarCandidato(candidatoData: any): Partial<Candidato> {
  */
 async function fetchCandidatosFromUrl(url: string) {
   try {
-    console.log(`Obteniendo candidatos de: ${url}`);
+
     
     const response = await fetch(url, {
       method: 'GET',
@@ -237,14 +237,13 @@ async function fetchCandidatosFromUrl(url: string) {
       return [];
     }
     
-    console.log(`Candidatos obtenidos: ${data.candidatos.length}`);
+
     
     // Extraer las redes sociales y cursos para procesarlos junto con los candidatos
     const redesSociales = data.redesSociales || [];
     const cursosCandidatos = data.cursosCandidatos || [];
     
-    console.log(`Redes sociales encontradas: ${redesSociales.length}`);
-    console.log(`Cursos encontrados: ${cursosCandidatos.length}`);
+
     
     // Procesar cada candidato para adaptarlo al modelo
     const candidatosProcesados = data.candidatos.map((candidato: any) => {
@@ -259,7 +258,7 @@ async function fetchCandidatosFromUrl(url: string) {
       return procesarCandidato(candidatoConDatos);
     }).filter(Boolean); // Filtrar candidatos nulos
     
-    console.log(`Candidatos procesados: ${candidatosProcesados.length}`);
+
     
     return candidatosProcesados;
   } catch (error) {
@@ -286,7 +285,7 @@ async function saveCandidatosToMongoDB(candidatos: Partial<Candidato>[]) {
       return { created, updated, errors };
     }
     
-    console.log(`Procesando ${candidatos.length} candidatos en lotes...`);
+
     
     // Obtener todos los IDs de candidatos para buscarlos de una sola vez
     const candidatoIds = candidatos.map(c => c.idCandidato);
@@ -331,13 +330,13 @@ async function saveCandidatosToMongoDB(candidatos: Partial<Candidato>[]) {
           // Solo incluir redesSociales si existen
           if (hasRedesSociales && candidato.redesSociales) {
             updateObj.redesSociales = candidato.redesSociales;
-            console.log(`Candidato ID ${candidato.idCandidato}: Guardando ${candidato.redesSociales.length} redes sociales`);
+
           }
           
           // Solo incluir cursosCandidatos si existen
           if (hasCursosCandidatos && candidato.cursosCandidatos) {
             updateObj.cursosCandidatos = candidato.cursosCandidatos;
-            console.log(`Candidato ID ${candidato.idCandidato}: Guardando ${candidato.cursosCandidatos.length} cursos`);
+
           }
           
           bulkOps.push({
@@ -361,21 +360,17 @@ async function saveCandidatosToMongoDB(candidatos: Partial<Candidato>[]) {
     
     // Ejecutar operaciones por lotes para actualizaciones
     if (bulkOps.length > 0) {
-      console.log(`Actualizando ${bulkOps.length} candidatos existentes...`);
+
       const bulkResult = await CandidatoModel.bulkWrite(bulkOps, { ordered: false });
-      console.log(`Resultado de actualizaciones por lotes:`, {
-        matchedCount: bulkResult.matchedCount,
-        modifiedCount: bulkResult.modifiedCount
-      });
     }
     
     // Crear nuevos candidatos en lotes
     if (newCandidatos.length > 0) {
-      console.log(`Creando ${newCandidatos.length} nuevos candidatos...`);
+
       await CandidatoModel.insertMany(newCandidatos, { ordered: false });
     }
     
-    console.log(`Procesamiento completado: ${created} creados, ${updated} actualizados, ${errors} errores`);
+
     return { created, updated, errors };
   } catch (error) {
     console.error('Error general al guardar candidatos:', error);
@@ -416,16 +411,14 @@ export async function GET(request: NextRequest) {
       allCandidatos.push(...candidatos);
     }
 
-    console.log(`Total de candidatos obtenidos: ${allCandidatos.length}`);
+
 
     // Estadísticas
     let mongoStats = { created: 0, updated: 0, errors: 0 };
     
     // Guardar en MongoDB Atlas
     try {
-      console.log('Guardando candidatos en MongoDB Atlas...');
       mongoStats = await saveCandidatosToMongoDB(allCandidatos);
-      console.log(`Guardados candidatos en MongoDB Atlas: ${mongoStats.created} creados, ${mongoStats.updated} actualizados`);
     } catch (mongoError) {
       console.error('Error al guardar en MongoDB Atlas:', mongoError);
       mongoStats.errors = allCandidatos.length;

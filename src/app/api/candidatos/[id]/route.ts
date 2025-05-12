@@ -143,7 +143,7 @@ export async function GET(
 ) {
   try {
     const id = params.id;
-    console.log(`Buscando candidato con ID: ${id}`);
+
 
     // Conectar a MongoDB
     await connectDB();
@@ -169,7 +169,7 @@ export async function GET(
     if (candidato) {
       // Asegurar que el candidato tenga la estructura esperada
       const candidatoData = candidato as any;
-      console.log(`Candidato encontrado: ${candidatoData.datosPersonales?.nombreCandidato || 'Sin nombre'}`);
+
       
       // Convertir el documento de MongoDB al tipo CandidatoType
       const plainDoc = JSON.parse(JSON.stringify(candidato));
@@ -236,7 +236,7 @@ export async function GET(
     }
     
     // Si llegamos aquí, no se encontró el candidato
-    console.log(`No se encontró candidato con ID: ${id}`);
+
     return new NextResponse(JSON.stringify({ error: 'Candidato no encontrado' }), {
       status: 404,
       headers: { 'Content-Type': 'application/json' }

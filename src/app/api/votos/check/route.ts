@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     } catch (error) {
       // En modo de desarrollo, permitimos consultas sin autenticación para pruebas
       if (process.env.NODE_ENV === 'development') {
-        console.log('Verificación de voto sin autenticación en desarrollo:', error);
+
         userId = searchParams.get('userId') || 'test_user_id';
       } else {
         // En producción, devolver error de autenticación

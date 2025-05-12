@@ -46,13 +46,13 @@ export function useVotosHandler({ displayLoginAlert }: UseVotosHandlerProps): Us
   const handleVotar = useCallback(async (candidato: Candidato) => {
     // Verificar autenticación
     if (!isAuthenticated || !userId) {
-      console.log('Usuario no autenticado, mostrando modal de login');
+
       // Mostrar el modal de inicio de sesión usando Clerk
       displayLoginAlert({ autoHideDuration: 0 });
       return;
     }
     
-    console.log('Usuario autenticado, ID:', userId);
+
     
     // Si el usuario ya votó por este candidato, mostrar mensaje personalizado y no hacer nada más
     if (candidato.userHasVoted) {
@@ -67,7 +67,7 @@ export function useVotosHandler({ displayLoginAlert }: UseVotosHandlerProps): Us
     
     // Obtener el ID del candidato para el voto
     const candidatoId = candidato._id || candidato.idCandidato;
-    console.log('ID del candidato para votar:', candidatoId);
+
     
     // Crear una copia modificada del candidato con userHasVoted=true y totalVotos incrementado
     const candidatoModificado = {
@@ -86,8 +86,7 @@ export function useVotosHandler({ displayLoginAlert }: UseVotosHandlerProps): Us
         }
       });
       
-      console.log('Enviando voto al servidor para candidato:', candidatoId);
-      console.log('Usuario ID:', userId);
+
       
       // Llamar directamente al endpoint de votación para asegurar que se guarde en MongoDB
       const response = await fetch('/api/votar', {
@@ -103,11 +102,11 @@ export function useVotosHandler({ displayLoginAlert }: UseVotosHandlerProps): Us
       });
       
       const responseData = await response.json();
-      console.log('Respuesta directa del servidor:', responseData);
+
       
       // También llamamos a la función del hook para mantener la consistencia
       const result = await voteHandler(candidatoModificado, userId);
-      console.log('Resultado de la votación:', result);
+
       
       if (result.success) {
         // Mostrar el modal de confirmación con un mensaje simplificado

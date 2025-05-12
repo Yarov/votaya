@@ -89,7 +89,7 @@ export function useCandidatos(): UseCandidatosReturn {
       if (entidadId) {
         url += `&entidad=${entidadId}`;
       }
-      console.log(`Obteniendo candidatos con filtros: tipo=${tipoCatalogo}${entidadId ? `, entidad=${entidadId}` : ''}, página=${currentPage}`);
+
       const response = await fetch(url, {
         headers: {
           'Accept': 'application/json',
@@ -117,11 +117,7 @@ export function useCandidatos(): UseCandidatosReturn {
         totalVotos: typeof c.totalVotos === 'number' ? c.totalVotos : 0
       }));
       
-      console.log('Candidatos procesados con votos:', candidatosConVotosValidos.map((c: Candidato) => ({ 
-        id: c._id || c.idCandidato, 
-        nombre: c.datosPersonales?.nombreCandidato, 
-        votos: c.totalVotos 
-      })));
+
       
       // Actualizar el estado con los candidatos recibidos
       // Si es la primera página o hay búsqueda, reemplazar allCandidatos
@@ -188,7 +184,7 @@ export function useCandidatos(): UseCandidatosReturn {
 
     // Si el candidato ya tiene userHasVoted=true, no intentar votar de nuevo
     if (candidato.userHasVoted) {
-      console.log('El usuario ya ha votado por este candidato');
+
       return { success: false, message: 'Ya has votado por este candidato' };
     }
 
@@ -293,7 +289,7 @@ export function useCandidatos(): UseCandidatosReturn {
       // Usar el _id de MongoDB en lugar de idCandidato
       const candidatoId = candidato._id || candidato.idCandidato;
       
-      console.log('Enviando denuncia para candidato con ID:', candidatoId);
+
       
       const response = await fetch('/api/denuncias', {
         method: 'POST',
