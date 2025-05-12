@@ -1,4 +1,4 @@
-import { CandidatoClass, DatosPersonales, PoderPostulaDescriptivo, Propuestas, DatosContacto, DatosAcademicos } from '@/models/CandidatoModel';
+import { Candidato, DatosPersonales, PoderPostulaDescriptivo, Propuestas, DatosContacto, DatosAcademicos } from '@/models/CandidatoModel';
 import { sanitizeObject, ensureArray, safeString } from './dataUtils';
 
 // Catálogo de grados académicos
@@ -95,7 +95,7 @@ export function mapearPoderPostula(poderes: any[]): PoderPostulaDescriptivo[] {
  * @param data Datos crudos del candidato
  * @returns Candidato transformado
  */
-export function transformarCandidato(data: any): Partial<CandidatoClass> {
+export function transformarCandidato(data: any): Partial<Candidato> {
   if (!data) {
     throw new Error('Datos de candidato inválidos');
   }
@@ -178,8 +178,7 @@ export function transformarCandidato(data: any): Partial<CandidatoClass> {
   }
   
   // Construir el candidato final
-  const candidato: Partial<CandidatoClass> = {
-    _id: data._id,
+  const candidato: Partial<Candidato> = {
     idCandidato: data.idCandidato,
     datosPersonales: datosPersonales as DatosPersonales, // Cast necesario para satisfacer el tipo
     descripcionCandidato: safeString(data.descripcionCandidato, ''),
@@ -191,22 +190,14 @@ export function transformarCandidato(data: any): Partial<CandidatoClass> {
     contacto: [], // El hook pre-save convertirá el objeto contacto a array
     datosAcademicos: datosAcademicos as DatosAcademicos, // Cast necesario para satisfacer el tipo
     razonPostulacion: safeString(data.razonPostulacion, ''),
-    organizacionPostulante: safeString(data.organizacionPostulante, ''),
-    // Campos adicionales que podrían estar presentes
-    tipoCandidato: data.tipoCandidato,
-    idCircunscripcionEleccion: data.idCircunscripcionEleccion,
-    idEstadoEleccion: data.idEstadoEleccion,
-    idSalaRegional: data.idSalaRegional,
-    idGrado: data.idGrado,
-    idTipoCandidatura: data.idTipoCandidatura,
-    descripcionTP: data.descripcionTP,
-    descripcionHLC: data.descripcionHLC
+    // Almacenamos los datos adicionales como propiedades personalizadas
+    motivacion: safeString(data.visionImparticionJusticia || data.razonPostulacion, '')
   };
   
   // Asignar el objeto contacto para que el hook pre-save lo convierta a array
   (candidato as any).contacto = contacto;
   
-  return sanitizeObject(candidato) as Partial<CandidatoClass>;
+  return sanitizeObject(candidato) as Partial<Candidato>;
 }
 
 /**
@@ -214,7 +205,7 @@ export function transformarCandidato(data: any): Partial<CandidatoClass> {
  * @param candidato Datos del candidato a preparar
  * @returns Datos preparados para la API
  */
-export function prepararDatosParaAPI(candidato: Partial<CandidatoClass>): any {
+export function prepararDatosParaAPI(candidato: Partial<Candidato>): any {
   const datos: any = { ...candidato };
   
   // Extraer propuestas a campos directos si es necesario

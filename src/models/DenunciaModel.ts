@@ -1,7 +1,7 @@
-import { prop, getModelForClass, modelOptions, Severity, Ref } from '@typegoose/typegoose';
+import { prop, getModelForClass, modelOptions, Severity } from '@typegoose/typegoose';
+import type { Ref } from '@typegoose/typegoose';
 import { TimeStamps } from '@typegoose/typegoose/lib/defaultClasses';
 import mongoose from 'mongoose';
-import type { Candidato } from '@/types/candidato';
 
 // Clase principal para la denuncia
 @modelOptions({ schemaOptions: { collection: 'denuncias' } })
@@ -13,7 +13,7 @@ export class Denuncia extends TimeStamps {
   public descripcion!: string;
 
   @prop({ required: true, ref: () => 'Candidato' })
-  public candidatoId!: Ref<Candidato>;
+  public candidatoId!: Ref<any>;
 
   @prop({ required: true, type: String })
   public userId!: string; // ID del usuario de Clerk

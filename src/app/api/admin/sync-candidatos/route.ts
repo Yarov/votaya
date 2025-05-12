@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mongoose from 'mongoose';
-import CandidatoModel, { CandidatoClass, DatosPersonales, Contacto, PoderPostulaDescriptivo, RedSocial } from '@/models/CandidatoModel';
+import CandidatoModel, { Candidato, DatosPersonales, Contacto, PoderPostulaDescriptivo, RedSocial } from '@/models/CandidatoModel';
 
 // Token simple para proteger el endpoint (en producción usar algo más seguro)
 const SYNC_TOKEN = process.env.SYNC_TOKEN || 'sync-token-123';
@@ -46,13 +46,13 @@ async function connectToMongoDB() {
 /**
  * Procesa un candidato para adaptarlo al modelo de Typegoose
  */
-function procesarCandidato(candidatoData: any): Partial<CandidatoClass> {
+function procesarCandidato(candidatoData: any): Partial<Candidato> {
   try {
     // Verificar datos mínimos
     if (!candidatoData || !candidatoData.idCandidato) {
       console.error('Candidato inválido o sin ID');
       // Devolver un objeto vacío en lugar de null para evitar errores de tipo
-      return {} as Partial<CandidatoClass>;
+      return {} as Partial<Candidato>;
     }
     
     // Mapeo de poder postula a descriptivo
@@ -168,7 +168,7 @@ function procesarCandidato(candidatoData: any): Partial<CandidatoClass> {
     }
     
     // Crear objeto candidato completo
-    const candidato: Partial<CandidatoClass> = {
+    const candidato: Partial<Candidato> = {
       idCandidato: candidatoData.idCandidato,
       datosPersonales: datosPersonales as DatosPersonales,
       descripcionCandidato: candidatoData.descripcionCandidato || '',
@@ -193,17 +193,9 @@ function procesarCandidato(candidatoData: any): Partial<CandidatoClass> {
         certificaciones: []
       },
       razonPostulacion: candidatoData.razonPostulacion || '',
-      organizacionPostulante: candidatoData.organizacionPostulante || '',
-      nombreCorto: candidatoData.nombreCorto || '',
-      tipoCandidato: candidatoData.tipoCandidato || '',
-      estatusVal: candidatoData.estatusVal || 1,
-      idCircunscripcionEleccion: candidatoData.idCircunscripcionEleccion,
-      idEstadoEleccion: candidatoData.idEstadoEleccion,
-      idSalaRegional: candidatoData.idSalaRegional,
-      idGrado: candidatoData.idGrado,
-      // Eliminar idTipoCandidatura que no existe en el modelo
-      descripcionTP: candidatoData.descripcionTP || '',
-      descripcionHLC: candidatoData.descripcionHLC || '',
+      // Almacenamos algunos datos adicionales como propiedades personalizadas que no están en el modelo
+      // pero que pueden ser útiles para la aplicación
+      motivacion: candidatoData.visionImparticionJusticia || candidatoData.razonPostulacion || '',
       // Agregar los nuevos campos
       redesSociales,
       cursosCandidatos
@@ -213,7 +205,7 @@ function procesarCandidato(candidatoData: any): Partial<CandidatoClass> {
   } catch (error) {
     console.error(`Error al procesar candidato:`, error);
     // Devolver un objeto vacío en lugar de null para evitar errores de tipo
-    return {} as Partial<CandidatoClass>;
+    return {} as Partial<Candidato>;
   }
 }
 
@@ -279,7 +271,7 @@ async function fetchCandidatosFromUrl(url: string) {
 /**
  * Guarda los candidatos en MongoDB usando operaciones por lotes para mayor eficiencia
  */
-async function saveCandidatosToMongoDB(candidatos: Partial<CandidatoClass>[]) {
+async function saveCandidatosToMongoDB(candidatos: Partial<Candidato>[]) {
   try {
     // Conectar a MongoDB Atlas
     await connectToMongoDB();

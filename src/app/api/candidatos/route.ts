@@ -84,8 +84,8 @@ async function getCandidatosFromMongoDB(tipo: TipoCatalogo | null, entidadId?: s
   ]);
   
   // Crear un mapa de ID de candidato a conteo de votos para acceso rápido
-  const votosPorCandidato = new Map();
-  votosAgregados.forEach(item => {
+  const votosPorCandidato = new Map<string, number>();
+  votosAgregados.forEach((item: { _id: string; totalVotos: number }) => {
     votosPorCandidato.set(item._id, item.totalVotos);
   });
   

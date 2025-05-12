@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     console.log('Candidato encontrado:', candidato.datosPersonales?.nombreCandidato);
 
     // Usar el _id de MongoDB para el registro del voto
-    const candidatoMongoId = candidato._id.toString();
+    const candidatoMongoId = (candidato._id as any).toString();
     
     // Verificar si el usuario ya votó por este candidato
     const votoExistente = await Voto.findOne({ 

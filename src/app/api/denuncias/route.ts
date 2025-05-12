@@ -57,13 +57,12 @@ export async function POST(request: NextRequest) {
 // Obtener todas las denuncias
 export async function GET() {
   try {
-    // Usar exec() para evitar el error de TypeScript con find()
-    const denuncias = await DenunciaModel.find().exec();
+    // Usar el modelo de Mongoose directamente para evitar problemas de tipado con Typegoose
+    const denuncias = await (DenunciaModel as any).find({}).lean();
     
-    // Convertir a objetos planos para la respuesta
-    const denunciasPlanas = denuncias.map((denuncia: any) => denuncia.toObject());
+    // Ya no es necesario convertir a objetos planos porque lean() ya lo hace
 
-    return NextResponse.json(denunciasPlanas);
+    return NextResponse.json(denuncias);
   } catch (error) {
     console.error('Error al obtener denuncias:', error);
     return NextResponse.json(
