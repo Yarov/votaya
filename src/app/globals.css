@@ -1,0 +1,82 @@
+/* Estilos básicos */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+header {
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos para la tarjeta de candidato */
+.candidato-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: white;
+}
+
+/* Estilos para botones */
+.btn-primary {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: #2563eb;
+}
+
+/* Estilos para imágenes */
+.img-candidato {
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+/* Prevenir scroll horizontal en toda la aplicación */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Estilo para comportamiento de app móvil */
+@media (max-width: 768px) {
+  body {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  /* Eliminar rebote de scroll en iOS */
+  html {
+    height: 100%;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Estilos para el contenedor principal */
+.main-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* Estilos para la lista de candidatos */
+.candidatos-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+  padding: 24px;
+}
