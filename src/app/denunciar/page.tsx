@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { SignInButton } from '@clerk/nextjs';
 import Image from 'next/image';
@@ -8,7 +8,8 @@ import { Candidato } from '@/types/candidato';
 import { formatImageUrl } from '@/utils/imageUtils';
 import { useAuth } from '@/hooks/useAuth';
 
-export default function DenunciarPage() {
+// Componente interno que usa useSearchParams
+function DenunciarForm() {
   const searchParams = useSearchParams();
   const candidatoId = searchParams.get('candidatoId');
   const id = candidatoId || null;
@@ -291,5 +292,14 @@ export default function DenunciarPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Componente principal envuelto en Suspense
+export default function DenunciarPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center">Cargando formulario de denuncia...</div>}>
+      <DenunciarForm />
+    </Suspense>
   );
 }

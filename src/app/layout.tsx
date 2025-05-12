@@ -6,11 +6,17 @@ import dynamic from 'next/dynamic';
 // Importar Navbar como componente del lado del cliente
 const Navbar = dynamic(() => import('@/components/Navbar'), { ssr: false });
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#1f2937" // Color gray-800 de Tailwind
+};
+
 export const metadata: Metadata = {
-  title: "Voto Ciudadano",
+  title: "VotaYA",
   description: "Plataforma de voto y reporte de irregularidades electorales",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
-  themeColor: "#1f2937", // Color gray-800 de Tailwind
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
