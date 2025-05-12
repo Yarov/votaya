@@ -1,42 +1,16 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import { clerkLocalization } from "../clerk.config.js";
+import { viewport, siteMetadata } from "../metadata.config.js";
 import "./globals.css";
 import dynamic from 'next/dynamic';
 
 // Importar Navbar como componente del lado del cliente
 const Navbar = dynamic(() => import('@/components/Navbar'), { ssr: false });
 
-export const viewport = {
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  themeColor: "#1f2937" // Color gray-800 de Tailwind
-};
-
-export const metadata: Metadata = {
-  title: "VotaYA",
-  description: "Plataforma de voto y reporte de irregularidades electorales",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "Voto Ciudadano"
-  },
-  openGraph: {
-    type: "website",
-    locale: "es_MX",
-    url: "https://voto-ciudadano.vercel.app/",
-    title: "Voto Ciudadano",
-    description: "Plataforma de voto y reporte de irregularidades electorales",
-    siteName: "Voto Ciudadano"
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Voto Ciudadano",
-    description: "Plataforma de voto y reporte de irregularidades electorales"
-  },
-  manifest: "/manifest.json"
-};
+// Exportar viewport y metadata desde el archivo de configuración
+export { viewport };
+export const metadata: Metadata = siteMetadata;
 
 export default function RootLayout({
   children,
@@ -48,9 +22,8 @@ export default function RootLayout({
       <head>
         <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
       </head>
-      <ClerkProvider>
+      <ClerkProvider localization={clerkLocalization}>
         <body className="bg-gray-50 min-h-screen overflow-x-hidden">
-          <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
           <Navbar />
           <main className="overflow-x-hidden md:container md:mx-auto pt-14 md:pt-0">
             {children}
