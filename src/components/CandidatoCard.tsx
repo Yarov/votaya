@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
 import { Candidato } from '@/types/candidato';
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import AlertLoginRequired from '@/components/AlertLoginRequired';
 import { formatImageUrl } from '@/utils/imageUtils';
 
@@ -24,15 +24,31 @@ export default function CandidatoCard({ candidato, onVotar, onDenunciar }: Candi
   const hasVoted = candidato.userHasVoted;
   const loading = false;
   
+  // Usar useMemo para optimizar el renderizado de datos que no cambian frecuentemente
+  const datosPersonales = useMemo(() => candidato.datosPersonales, [candidatoId]);
+  const descripcionCandidato = useMemo(() => 
+    candidato.descripcionCandidato || candidato.datosPersonales?.motivacionCargo || 'Sin descripción disponible',
+    [candidatoId]
+  );
+  
+  // Precargar la página de detalles al montar el componente
+  useEffect(() => {
+    router.prefetch(`/candidato/${candidatoId}`);
+  }, [candidatoId, router]);
+  
   const verDetalle = () => {
+    // Usar router.prefetch para precargar la página de destino y mejorar el rendimiento
+    router.prefetch(`/candidato/${candidatoId}`);
     router.push(`/candidato/${candidatoId}`);
   };
 
-  // Truncar la descripción a 100 caracteres
-  const descripcionCandidato = candidato.descripcionCandidato || candidato.datosPersonales?.motivacionCargo || 'Sin descripción disponible';
-  const descripcionCorta = descripcionCandidato.length > 100 
-    ? `${descripcionCandidato.substring(0, 100)}...` 
-    : descripcionCandidato;
+  // Truncar la descripción a 100 caracteres (usando el valor memorizado)
+  const descripcionCorta = useMemo(() => 
+    descripcionCandidato.length > 100 
+      ? `${descripcionCandidato.substring(0, 100)}...` 
+      : descripcionCandidato,
+    [descripcionCandidato]
+  );
 
   return (
     <>
@@ -122,12 +138,13 @@ export default function CandidatoCard({ candidato, onVotar, onDenunciar }: Candi
             <button
               onClick={verDetalle}
               className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center"
+              onMouseEnter={() => router.prefetch(`/candidato/${candidatoId}`)} // Precargar al pasar el mouse para mejorar aún más el rendimiento
             >
               <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               </svg>
-              Detalles
+              Ver perfil
             </button>
             {!hasVoted && (
               <button

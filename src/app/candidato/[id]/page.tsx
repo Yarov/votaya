@@ -12,6 +12,7 @@ import { Tab } from '@headlessui/react';
 // Importación de los componentes modulares
 // Eliminado import CandidatoNavbar
 import CandidatoHero from '@/components/candidato-detalle/CandidatoHero';
+import CandidatoPostula from '@/components/candidato-detalle/CandidatoPostula';
 import CandidatoDescripcion from '@/components/candidato-detalle/CandidatoDescripcion';
 import CandidatoPropuestas from '@/components/candidato-detalle/CandidatoPropuestas';
 import CandidatoExperiencia from '@/components/candidato-detalle/CandidatoExperiencia';
@@ -154,6 +155,16 @@ export default function CandidatoDetalle({ params }: { params: { id: string } })
         handleDenunciar={handleDenunciar} 
         voteLoading={voteLoading} 
       />
+      
+      {/* Información sobre el poder y cargo al que postula */}
+      {/* <div className="bg-gray-100 py-6">
+        <div className="max-w-7xl mx-auto px-4">
+          <CandidatoPostula 
+            poderPostulaDescriptivo={candidato.datosPersonales?.poderPostulaDescriptivo} 
+            cargoPostula={candidato.datosPersonales?.cargoPostula} 
+          />
+        </div>
+      </div> */}
       
       {/* Contenido principal */}
       <div className="max-w-7xl mx-auto px-4 py-8">

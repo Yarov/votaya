@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FiSearch, FiX } from "react-icons/fi";
 
 interface CandidatoSearchProps {
@@ -10,6 +10,11 @@ interface CandidatoSearchProps {
 export default function CandidatoSearch({ onSearch, initialValue = "" }: CandidatoSearchProps) {
   const [query, setQuery] = useState(initialValue);
   const [isFocused, setIsFocused] = useState(false);
+  
+  // Actualizar el estado local cuando cambie initialValue
+  useEffect(() => {
+    setQuery(initialValue);
+  }, [initialValue]);
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);

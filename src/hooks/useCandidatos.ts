@@ -9,7 +9,8 @@ interface UseCandidatosReturn {
   error: string;
   currentPage: number;
   totalPages: number;
-  tipoCatalogo: TipoCatalogo;
+  totalCandidatos: number;
+  tipoCatalogo: TipoCatalogo | '';
   searchQuery: string;
   entidadId: string;
   fetchCandidatos: () => Promise<void>;
@@ -21,73 +22,96 @@ interface UseCandidatosReturn {
   setEntidadId: (entidad: string) => void;
 }
 
+// Cache para almacenar datos de candidatos por ID
+const candidatosCache: Record<string, { data: Candidato; timestamp: number }> = {};
+
+// Tiempo de expiración del caché en milisegundos (5 minutos)
+const CACHE_EXPIRATION = 5 * 60 * 1000;
+
+// Función para obtener un candidato del caché o null si no existe o expiró
+function getCachedCandidato(id: string): Candidato | null {
+  const cached = candidatosCache[id];
+  if (!cached) return null;
+  
+  // Verificar si el caché ha expirado
+  if (Date.now() - cached.timestamp > CACHE_EXPIRATION) {
+    delete candidatosCache[id];
+    return null;
+  }
+  
+  return cached.data;
+}
+
+// Función para guardar un candidato en el caché
+function cacheCandidato(candidato: Candidato): void {
+  const id = candidato._id || candidato.idCandidato as string;
+  if (!id) return;
+  
+  candidatosCache[id] = {
+    data: candidato,
+    timestamp: Date.now()
+  };
+}
+
 export function useCandidatos(): UseCandidatosReturn {
   const [allCandidatos, setAllCandidatos] = useState<Candidato[]>([]);
   const [displayedCandidatos, setDisplayedCandidatos] = useState<Candidato[]>([]);
-  const [tipoCatalogo, setTipoCatalogo] = useState<TipoCatalogo>('salasRegionales');
+  const [tipoCatalogo, setTipoCatalogo] = useState<TipoCatalogo | ''>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState("");
   const [entidadId, setEntidadId] = useState("");
   const { hasVoted } = useUserVotos();
-  
+
   // Estados para la paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCandidatos, setTotalCandidatos] = useState(0);
   const candidatosPorPagina = 30;
 
-  // Efecto para cargar candidatos cuando cambian los filtros o la página
+  // Efecto para cargar candidatos cuando cambian los filtros, la página o la búsqueda
   useEffect(() => {
     fetchCandidatos();
-  }, [tipoCatalogo, entidadId, currentPage]);
-  
+  }, [tipoCatalogo, entidadId, currentPage, searchQuery]);
+
   // Efecto para reiniciar a la primera página cuando cambia la búsqueda, tipo o entidad
   useEffect(() => {
     if (searchQuery.trim() !== "" || tipoCatalogo || entidadId) {
       setCurrentPage(1); // Reiniciar a la primera página al cambiar filtros
     }
   }, [searchQuery, tipoCatalogo, entidadId]);
-  
-  // Efecto para realizar búsqueda local cuando cambia el texto de búsqueda
+
+  // Efecto para actualizar los candidatos mostrados con el estado de voto
   useEffect(() => {
-    if (searchQuery.trim() !== "") {
-      // Si hay texto de búsqueda, filtrar localmente los candidatos ya cargados
-      const q = searchQuery.trim().toLowerCase();
-      const filtrados = allCandidatos.filter(c => {
-        const nombre = (c.datosPersonales?.nombreCandidato || "").toLowerCase();
-        return nombre.includes(q);
-      });
-      
-      // Marcar userHasVoted para cada candidato
-      const candidatosMarcados = filtrados.map((c) => ({
-        ...c,
-        userHasVoted: hasVoted(c._id || c.idCandidato as string),
-      }));
-      
-      setDisplayedCandidatos(candidatosMarcados);
-      setTotalPages(Math.ceil(filtrados.length / candidatosPorPagina) || 1);
-      setTotalCandidatos(filtrados.length);
-    } else if (allCandidatos.length > 0) {
-      // Si no hay texto de búsqueda pero sí hay candidatos cargados, mostrar los candidatos actuales
-      // con el estado de voto actualizado
-      const candidatosMarcados = displayedCandidatos.map((c) => ({
-        ...c,
-        userHasVoted: hasVoted(c._id || c.idCandidato as string),
-      }));
-      
-      setDisplayedCandidatos(candidatosMarcados);
-    }
-  }, [searchQuery, allCandidatos, hasVoted]);
+    // Marcar userHasVoted para cada candidato
+    const candidatosMarcados = allCandidatos.map((c) => ({
+      ...c,
+      userHasVoted: hasVoted(c._id || c.idCandidato as string),
+    }));
+
+    setDisplayedCandidatos(candidatosMarcados);
+  }, [allCandidatos, hasVoted]);
 
   const fetchCandidatos = async () => {
     setLoading(true);
     setError('');
     try {
       // Construir la URL con los parámetros de filtrado y paginación
-      let url = `/api/candidatos?tipo=${tipoCatalogo}&page=${currentPage}&limit=${candidatosPorPagina}`;
+      let url = `/api/candidatos?page=${currentPage}&limit=${candidatosPorPagina}`;
+      
+      // Solo incluir el tipo si no hay texto de búsqueda
+      if (tipoCatalogo && searchQuery.trim() === "") {
+        url += `&tipo=${tipoCatalogo}`;
+      }
+      
+      // Incluir entidad si está seleccionada
       if (entidadId) {
         url += `&entidad=${entidadId}`;
+      }
+      
+      // Incluir término de búsqueda si existe
+      if (searchQuery.trim() !== "") {
+        url += `&search=${encodeURIComponent(searchQuery.trim())}`;
       }
 
       const response = await fetch(url, {
@@ -96,29 +120,49 @@ export function useCandidatos(): UseCandidatosReturn {
           'User-Agent': 'VotoCiudadano/1.0'
         }
       });
-      
+
       if (!response.ok) {
         throw new Error('No se pudieron cargar los candidatos');
       }
-      
+
       const data = await response.json();
-      
+
       // Verificar si hay candidatos en la respuesta
       if (!data.candidatos || !Array.isArray(data.candidatos)) {
         console.error('La respuesta no contiene un array de candidatos:', data);
         throw new Error('Formato de respuesta inválido');
       }
-      
-      // Asegurarse de que todos los candidatos tengan un valor válido para totalVotos
-      const candidatosConVotosValidos = data.candidatos.map((c: Candidato) => ({
-        ...c,
-        userHasVoted: hasVoted(c._id || c.idCandidato as string),
-        // Asegurar que totalVotos siempre sea un número
-        totalVotos: typeof c.totalVotos === 'number' ? c.totalVotos : 0
-      }));
-      
 
-      
+      // Asegurarse de que todos los candidatos tengan un valor válido para totalVotos
+      // y aplicar caché para información personal
+      const candidatosConVotosValidos = data.candidatos.map((c: Candidato) => {
+        const id = c._id || c.idCandidato as string;
+        const cachedCandidato = getCachedCandidato(id);
+        
+        // Crear candidato con datos actualizados pero preservando información personal en caché
+        const candidatoActualizado = {
+          ...c,
+          userHasVoted: hasVoted(id),
+          // Asegurar que totalVotos siempre sea un número
+          totalVotos: typeof c.totalVotos === 'number' ? c.totalVotos : 0
+        };
+        
+        // Si hay datos en caché, usar la información personal de la caché
+        if (cachedCandidato) {
+          // Mantener los datos personales en caché pero actualizar datos dinámicos
+          candidatoActualizado.datosPersonales = cachedCandidato.datosPersonales;
+          candidatoActualizado.descripcionCandidato = cachedCandidato.descripcionCandidato;
+          candidatoActualizado.propuestas = cachedCandidato.propuestas;
+        }
+        
+        // Guardar en caché
+        cacheCandidato(candidatoActualizado);
+        
+        return candidatoActualizado;
+      });
+
+
+
       // Actualizar el estado con los candidatos recibidos
       // Si es la primera página o hay búsqueda, reemplazar allCandidatos
       // Si no, mantener los candidatos existentes para búsquedas locales
@@ -130,7 +174,7 @@ export function useCandidatos(): UseCandidatosReturn {
         const existingIds = new Set(allCandidatos.map((c: Candidato) => c._id || c.idCandidato));
         // Convertir a array y verificar si hay nuevos candidatos
         const hasNewCandidatos = Array.from(newCandidatoIds).some(id => id !== undefined && id !== null && !existingIds.has(id as string | number));
-        
+
         if (hasNewCandidatos) {
           // Combinar los candidatos existentes con los nuevos, evitando duplicados
           const combinedCandidatos = [...allCandidatos];
@@ -143,10 +187,10 @@ export function useCandidatos(): UseCandidatosReturn {
           setAllCandidatos(combinedCandidatos);
         }
       }
-      
+
       // Actualizar los candidatos mostrados con los datos procesados
       setDisplayedCandidatos(candidatosConVotosValidos);
-      
+
       // Actualizar la información de paginación
       if (data.pagination) {
         setTotalPages(data.pagination.totalPages);
@@ -167,7 +211,7 @@ export function useCandidatos(): UseCandidatosReturn {
       setLoading(false);
     }
   };
-  
+
   // Función para cambiar de página
   const handlePageChange = (page: number) => {
     if (page !== currentPage) {
@@ -210,14 +254,14 @@ export function useCandidatos(): UseCandidatosReturn {
           return { success: false, message: 'Usuario no autenticado' };
         }
         const errorData = await response.json();
-        
+
         // Si el error es porque ya votó, actualizar la UI para reflejar esto
         if (errorData.error && errorData.error.includes('Ya has votado')) {
           // Actualizar inmediatamente la UI para mostrar que el usuario ya ha votado
           updateCandidatoVoteStatus(candidato);
           return { success: false, message: 'Ya has votado por este candidato' };
         }
-        
+
         throw new Error(errorData.error || 'Error al registrar voto');
       }
 
@@ -227,52 +271,52 @@ export function useCandidatos(): UseCandidatosReturn {
       return { success: true, message: 'Voto registrado correctamente' };
     } catch (error) {
       console.error('Error al votar:', error);
-      return { 
-        success: false, 
-        message: error instanceof Error ? error.message : 'Error al registrar voto' 
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Error al registrar voto'
       };
     } finally {
       setLoading(false);
     }
   };
-  
+
   // Función auxiliar para actualizar el estado de voto de un candidato
   const updateCandidatoVoteStatus = (candidato: Candidato) => {
     // Actualizar la lista de candidatos para reflejar el voto
     // El contador de votos se actualizará automáticamente en la próxima carga desde la API
-    setAllCandidatos(prevCandidatos => 
+    setAllCandidatos(prevCandidatos =>
       prevCandidatos.map(c => {
         // Si es el mismo candidato por el que votamos, actualizamos su estado
-        if ((c._id && c._id === candidato._id) || 
-            (c.idCandidato && c.idCandidato === candidato.idCandidato)) {
-          return { 
-            ...c, 
+        if ((c._id && c._id === candidato._id) ||
+          (c.idCandidato && c.idCandidato === candidato.idCandidato)) {
+          return {
+            ...c,
             userHasVoted: true,
             // Incrementar temporalmente el contador para una experiencia de usuario más fluida
             // En la próxima carga, se obtendrá el valor real desde la base de datos
-            totalVotos: (c.totalVotos || 0) + 1 
+            totalVotos: (c.totalVotos || 0) + 1
           };
         }
         return c;
       })
     );
-    
+
     // También actualizar los candidatos mostrados
-    setDisplayedCandidatos(prevDisplayed => 
+    setDisplayedCandidatos(prevDisplayed =>
       prevDisplayed.map(c => {
-        if ((c._id && c._id === candidato._id) || 
-            (c.idCandidato && c.idCandidato === candidato.idCandidato)) {
-          return { 
-            ...c, 
+        if ((c._id && c._id === candidato._id) ||
+          (c.idCandidato && c.idCandidato === candidato.idCandidato)) {
+          return {
+            ...c,
             userHasVoted: true,
             // Incrementar temporalmente el contador para una experiencia de usuario más fluida
-            totalVotos: (c.totalVotos || 0) + 1 
+            totalVotos: (c.totalVotos || 0) + 1
           };
         }
         return c;
       })
     );
-    
+
     // Opcional: Recargar los datos después de un breve retraso para obtener el conteo actualizado desde la API
     // Esto asegura que los datos estén sincronizados con la base de datos
     setTimeout(() => {
@@ -288,9 +332,9 @@ export function useCandidatos(): UseCandidatosReturn {
     try {
       // Usar el _id de MongoDB en lugar de idCandidato
       const candidatoId = candidato._id || candidato.idCandidato;
-      
 
-      
+
+
       const response = await fetch('/api/denuncias', {
         method: 'POST',
         headers: {
@@ -321,6 +365,7 @@ export function useCandidatos(): UseCandidatosReturn {
     error,
     currentPage,
     totalPages,
+    totalCandidatos,
     tipoCatalogo,
     searchQuery,
     entidadId,

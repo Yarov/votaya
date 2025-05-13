@@ -9,7 +9,7 @@ import { VotoModel } from '@/models/VotoModel';
  * Función para obtener candidatos de MongoDB filtrados por tipo y entidad federativa
  * con soporte para paginación
  */
-async function getCandidatosFromMongoDB(tipo: TipoCatalogo | null, entidadId?: string, page: number = 1, limit: number = 12) {
+async function getCandidatosFromMongoDB(tipo: TipoCatalogo | null, entidadId?: string, searchQuery: string = '', page: number = 1, limit: number = 12) {
   // Conectar a MongoDB
   await dbConnect();
   
@@ -24,41 +24,77 @@ async function getCandidatosFromMongoDB(tipo: TipoCatalogo | null, entidadId?: s
 
   }
   
-  // Si se especifica un tipo, construir un filtro adecuado
+  // Preparar condiciones para la búsqueda y filtros
+  const searchConditions = [];
+  const typeConditions = [];
+  
+  // Si se especifica un término de búsqueda, agregar condiciones de búsqueda
+  if (searchQuery && searchQuery.trim() !== '') {
+    // Buscar en múltiples campos (nombre, descripción, etc.) para una búsqueda más completa
+    searchConditions.push(
+      // Buscar en el nombre del candidato
+      { 'datosPersonales.nombreCandidato': { $regex: searchQuery, $options: 'i' } },
+      // Buscar en la descripción del candidato
+      { 'descripcionCandidato': { $regex: searchQuery, $options: 'i' } },
+      // Buscar en las propuestas
+      { 'propuestas.propuesta1': { $regex: searchQuery, $options: 'i' } },
+      { 'propuestas.propuesta2': { $regex: searchQuery, $options: 'i' } },
+      { 'propuestas.propuesta3': { $regex: searchQuery, $options: 'i' } },
+      // Buscar en la visión de impartición de justicia
+      { 'visionImparticionJusticia': { $regex: searchQuery, $options: 'i' } }
+    );
+  }
+  
+  // Si se especifica un tipo, agregar condiciones de tipo
   if (tipo) {
     // Mapeo de tipos a criterios de filtrado para la consulta
     switch (tipo) {
       case 'salasRegionales':
-        query.$or = [
+        typeConditions.push(
           { 'datosPersonales.cargoPostula': { $regex: /Sala Regional/i } },
           { 'datosPersonales.poderPostula': { $in: [1, '1'] } }
-        ];
+        );
         break;
       case 'salaSuperior':
-        query.$or = [
+        typeConditions.push(
           { 'datosPersonales.cargoPostula': { $regex: /Sala Superior/i } },
           { 'datosPersonales.poderPostula': { $in: [2, '2'] } }
-        ];
+        );
         break;
       case 'tribunalDJ':
-        query.$or = [
+        typeConditions.push(
           { 'datosPersonales.cargoPostula': { $regex: /Tribunal de Disciplina/i } },
           { 'datosPersonales.poderPostula': { $in: [3, '3'] } }
-        ];
+        );
         break;
       case 'tribunales':
-        query.$or = [
+        typeConditions.push(
           { 'datosPersonales.cargoPostula': { $regex: /Tribunal/i } },
           { 'datosPersonales.poderPostula': { $in: [4, '4'] } }
-        ];
+        );
         break;
       case 'supremacorte':
-        query.$or = [
+        typeConditions.push(
           { 'datosPersonales.cargoPostula': { $regex: /Suprema Corte/i } },
           { 'datosPersonales.poderPostula': { $in: [5, '5'] } }
-        ];
+        );
         break;
     }
+  }
+  
+  // Construir la consulta final combinando las condiciones
+  if (searchConditions.length > 0 && typeConditions.length > 0) {
+    // Si hay condiciones tanto de búsqueda como de tipo, usar $and para combinarlas
+    query.$and = [
+      { $or: searchConditions },
+      { $or: typeConditions }
+    ];
+  } else if (searchConditions.length > 0) {
+    // Si solo hay condiciones de búsqueda
+    query.$or = searchConditions;
+  } else if (typeConditions.length > 0) {
+    // Si solo hay condiciones de tipo
+    query.$or = typeConditions;
   }
   
   // Calcular el total de candidatos que coinciden con la consulta (para paginación)
@@ -113,6 +149,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const tipo = searchParams.get('tipo') as TipoCatalogo | null;
     const entidadId = searchParams.get('entidad');
+    const searchQuery = searchParams.get('search') || searchParams.get('q') || '';
     
     // Obtener parámetros de paginación
     const page = parseInt(searchParams.get('page') || '1', 10);
@@ -120,8 +157,14 @@ export async function GET(request: Request) {
     
 
     
-    // Obtener candidatos de MongoDB con la consulta optimizada y paginación
-    const result = await getCandidatosFromMongoDB(tipo, entidadId || undefined, page, limit);
+    // Obtener candidatos de MongoDB con la consulta optimizada, búsqueda y paginación
+    const result = await getCandidatosFromMongoDB(
+      tipo, 
+      entidadId || undefined, 
+      searchQuery,
+      page, 
+      limit
+    );
     
     // Convertir los documentos de MongoDB al tipo CandidatoType
     // y aplicar las transformaciones necesarias

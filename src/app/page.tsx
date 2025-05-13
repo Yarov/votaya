@@ -36,6 +36,7 @@ export default function Home() {
     error,
     currentPage,
     totalPages,
+    totalCandidatos,
     tipoCatalogo,
     searchQuery,
     entidadId,
@@ -124,7 +125,7 @@ export default function Home() {
             />
             {/* Información sobre la paginación */}
             <div className="text-center text-sm text-gray-500 mt-2">
-              Mostrando {displayedCandidatos.length} de {allCandidatos.length} candidatos
+              Mostrando {displayedCandidatos.length} de {totalCandidatos} candidatos
             </div>
           </>
         ) : !error ? (

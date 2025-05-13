@@ -61,35 +61,11 @@ export default function CandidatoHero({
     <div className="bg-gradient-to-r from-gray-700 to-gray-900 text-white mt-0">
       <div className="max-w-7xl mx-auto px-4 pt-8 pb-12 md:py-16">
         {/* Navegación superior */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-start items-center mb-8">
           <Link href="/" className="flex items-center text-white hover:text-gray-200 transition-colors">
             <ArrowLeftIcon className="h-4 w-4 mr-2" />
             <span className="font-medium">Volver al listado</span>
           </Link>
-          
-          <div className="flex items-center space-x-3">
-            {localUserHasVoted ? (
-              <div className="flex items-center bg-green-600 text-white px-3 py-1.5 rounded-full text-sm shadow-sm">
-                <CheckBadgeIcon className="h-4 w-4 mr-1" />
-                <span>Votado</span>
-              </div>
-            ) : (
-              <button
-                onClick={handleVote}
-                disabled={voteLoading}
-                className={`${voteLoading ? 'bg-gray-500' : 'bg-gray-700 hover:bg-gray-600'} text-white px-4 py-1.5 rounded-full text-sm font-medium transition-colors shadow-sm`}
-              >
-                {voteLoading ? 'Procesando...' : 'Votar'}
-              </button>
-            )}
-            
-            <button
-              onClick={handleDenunciar}
-              className="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-full text-sm transition-colors backdrop-blur-sm shadow-sm"
-            >
-              Denunciar
-            </button>
-          </div>
         </div>
         
         <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
@@ -153,26 +129,58 @@ export default function CandidatoHero({
                 })()}
               </div>
               
-              {/* Contadores de votos y denuncias */}
-              <div className="flex gap-4 mt-4 md:mt-0">
-                {/* Contador de votos */}
-                <div className="bg-gradient-to-br from-green-500/80 to-green-700/80 rounded-lg p-4 backdrop-blur-sm shadow-lg text-white flex flex-col items-center justify-center min-w-[120px]">
-                  <div className="flex items-center justify-center mb-1">
-                    <CheckBadgeIcon className="h-5 w-5 mr-1 text-green-200" />
+              {/* Contadores de votos y denuncias con botones debajo */}
+              <div className="flex flex-wrap gap-6 justify-center md:justify-start mt-6">
+                {/* Contador de votos con botón de votar */}
+                <div className="flex flex-col items-center gap-3 max-w-[160px]">
+                  <div className="bg-gradient-to-br from-green-500/80 to-green-700/80 rounded-lg p-4 backdrop-blur-sm shadow-lg text-white flex flex-col items-center justify-center w-full">
+                    <div className="flex items-center justify-center mb-1">
+                      <CheckBadgeIcon className="h-5 w-5 mr-1 text-green-200" />
+                    </div>
+                    <span className="block text-3xl font-bold">{localTotalVotos}</span>
+                    <span className="text-sm text-green-100">Votos recibidos</span>
                   </div>
-                  <span className="block text-3xl font-bold">{localTotalVotos}</span>
-                  <span className="text-sm text-green-100">Votos recibidos</span>
+                  
+                  {/* Botón de votar */}
+                  {localUserHasVoted ? (
+                    <div className="flex items-center justify-center bg-green-600 text-white px-4 py-3 rounded-lg text-base shadow-md w-full">
+                      <CheckBadgeIcon className="h-5 w-5 mr-2" />
+                      <span className="font-medium">Votado</span>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleVote}
+                      disabled={voteLoading}
+                      className={`${voteLoading ? 'bg-gray-500' : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'} text-white px-4 py-3 rounded-lg text-base font-medium transition-colors shadow-md w-full flex items-center justify-center`}
+                    >
+                      <CheckBadgeIcon className="h-5 w-5 mr-2" />
+                      {voteLoading ? '...' : 'Votar'}
+                    </button>
+                  )}
                 </div>
                 
-                {/* Contador de denuncias */}
-                <div className="bg-gradient-to-br from-red-500/80 to-red-700/80 rounded-lg p-4 backdrop-blur-sm shadow-lg text-white flex flex-col items-center justify-center min-w-[120px]">
-                  <div className="flex items-center justify-center mb-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1 text-red-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {/* Contador de denuncias con botón de denunciar */}
+                <div className="flex flex-col items-center gap-3 max-w-[160px]">
+                  <div className="bg-gradient-to-br from-red-500/80 to-red-700/80 rounded-lg p-4 backdrop-blur-sm shadow-lg text-white flex flex-col items-center justify-center w-full">
+                    <div className="flex items-center justify-center mb-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1 text-red-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                    </div>
+                    <span className="block text-3xl font-bold">{(candidato as any).totalDenuncias || 0}</span>
+                    <span className="text-sm text-red-100">Denuncias</span>
+                  </div>
+                  
+                  {/* Botón de denunciar */}
+                  <button
+                    onClick={handleDenunciar}
+                    className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-4 py-3 rounded-lg text-base font-medium transition-colors shadow-md w-full flex items-center justify-center"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
-                  </div>
-                  <span className="block text-3xl font-bold">{(candidato as any).totalDenuncias || 0}</span>
-                  <span className="text-sm text-red-100">Denuncias</span>
+                    Denunciar
+                  </button>
                 </div>
               </div>
             </div>
